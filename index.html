@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>APK MOVIES - Premium AppZone</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        /* --- EXACT SAME PREMIUM UI VARIABLES --- */
+        :root {
+            --primary: #6331e0;
+            --primary-light: #f0eaff;
+            --bg: #f9f9fc;
+            --card: #ffffff;
+            --text-dark: #1e1e24;
+            --text-gray: #757585;
+            --border: #ececf1;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text-dark); overflow-x: hidden; width: 100vw; padding-bottom: 90px; }
+
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .menu-icon, .search-icon { width: 24px; height: 24px; fill: var(--text-dark); cursor: pointer; transition: 0.2s; }
+        .menu-icon:active, .search-icon:active { transform: scale(0.8); fill: var(--primary); }
+        
+        .logo-container { display: flex; align-items: center; gap: 10px; }
+        .logo-box { background: var(--primary); width: 36px; height: 36px; border-radius: 8px; display: flex; justify-content: center; align-items: center; color: white; }
+        .logo-box svg { width: 20px; height: 20px; fill: white; }
+        .logo-text h1 { font-size: 1rem; font-weight: 800; color: var(--text-dark); letter-spacing: -0.5px; line-height: 1.1; }
+        .logo-text span { font-size: 0.6rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .top-tabs { display: flex; justify-content: space-between; padding: 0 20px; background: var(--card); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+        .top-tabs::-webkit-scrollbar { display: none; }
+        .tab { padding: 15px 10px; font-size: 0.8rem; font-weight: 700; color: var(--text-gray); white-space: nowrap; cursor: pointer; transition: 0.2s; }
+        .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+        .tab:active { transform: scale(0.9); opacity: 0.7; }
+
+        .search-container { padding: 15px 20px; background: var(--card); }
+        .search-wrapper { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg); }
+        .search-wrapper input { flex-grow: 1; padding: 12px 15px; border: none; outline: none; font-size: 0.9rem; background: transparent; color: var(--text-dark); }
+        .search-btn { background: var(--primary); color: white; border: none; padding: 0 20px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        .search-btn:active { opacity: 0.8; }
+
+        .banner-container { padding: 5px 20px 15px; background: var(--card); }
+        .banner-container img { width: 100%; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 15px rgba(99,49,224,0.2); cursor: pointer; transition: 0.2s; }
+        .banner-container img:active { transform: scale(0.98); }
+
+        .categories { display: flex; gap: 20px; padding: 15px 20px; overflow-x: auto; background: var(--card); border-bottom: 1px solid var(--border); scrollbar-width: none; }
+        .categories::-webkit-scrollbar { display: none; }
+        .cat-item { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 60px; cursor: pointer; transition: 0.2s; }
+        .cat-item:active { transform: scale(0.9); }
+        .cat-icon { width: 50px; height: 50px; background: var(--primary-light); border-radius: 16px; display: flex; justify-content: center; align-items: center; color: var(--primary); }
+        .cat-icon svg { width: 24px; height: 24px; fill: var(--primary); }
+        .cat-item span { font-size: 0.65rem; font-weight: 600; color: var(--text-gray); text-transform: uppercase; }
+
+        .section { padding: 20px; background: var(--bg); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .section-header h2 { font-size: 1.1rem; font-weight: 800; color: var(--text-dark); }
+        .section-header a { font-size: 0.8rem; font-weight: 600; color: var(--primary); text-decoration: none; transition: 0.2s; }
+        .section-header a:active { opacity: 0.5; }
+        
+        .horizontal-scroll { display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; padding-bottom: 10px; }
+        .horizontal-scroll::-webkit-scrollbar { display: none; }
+
+        .apk-card { min-width: 130px; background: var(--card); border-radius: 12px; padding: 15px; text-align: center; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
+        .apk-card:active { transform: scale(0.95); border-color: var(--primary); }
+        .apk-card img { width: 55px; height: 55px; border-radius: 12px; margin-bottom: 10px; object-fit: contain; }
+        .apk-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text-dark); }
+        .apk-sub { font-size: 0.65rem; color: var(--text-gray); margin-bottom: 2px; }
+        .dl-icon { margin-top: auto; padding-top: 10px; color: var(--primary); }
+        .dl-icon svg { width: 20px; height: 20px; fill: currentColor; }
+
+        .movie-card { min-width: 140px; border-radius: 12px; display: flex; flex-direction: column; position: relative; cursor: pointer; transition: 0.2s; }
+        .movie-card:active { transform: scale(0.95); }
+        .movie-card .hd-badge { position: absolute; top: 8px; left: 8px; background: var(--primary); color: white; font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 2; }
+        .movie-card img { width: 100%; height: 200px; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 10px; border: 1px solid var(--border); }
+        .movie-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-dark); }
+        .movie-sub { font-size: 0.65rem; color: var(--text-gray); }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-gray); text-decoration: none; width: 20%; cursor: pointer; transition: 0.2s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item svg { width: 22px; height: 22px; fill: currentColor; margin-bottom: 4px; transition: 0.2s; }
+        .nav-item:active { transform: translateY(5px); } /* Nice click animation */
+        .nav-label { font-size: 0.65rem; font-weight: 600; }
+        
+        .nav-center { position: relative; top: -15px; background: var(--primary); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(99,49,224,0.4); transition: 0.2s; }
+        .nav-center:active { transform: scale(0.85) translateY(5px); }
+        .nav-center svg { fill: white; width: 24px; height: 24px; margin-bottom: 0; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <svg class="menu-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        <div class="logo-container">
+            <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></div>
+            <div class="logo-text"><h1>APK MOVIES</h1><span>APK & MOVIE DOWNLOADER</span></div>
+        </div>
+        <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    </header>
+
+    <div class="top-tabs" id="main-tabs">
+        <div class="tab active" onclick="animateTab(this)">HOME</div>
+        <div class="tab" onclick="animateTab(this)">APPS</div>
+        <div class="tab" onclick="animateTab(this)">MOVIES</div>
+        <div class="tab" onclick="animateTab(this)">TV SHOWS</div>
+        <div class="tab" onclick="animateTab(this)">GAMES</div>
+    </div>
+
+    <div class="search-container">
+        <div class="search-wrapper">
+            <input type="text" id="search-input" placeholder="Search for apps, movies, games...">
+            <button class="search-btn">Search</button>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <div class="banner-container">
+            <img src="https://www.image2url.com/r2/default/images/1776869502759-de7ceade-d465-4126-9cf9-ed179ad01599.jpg" alt="Promo Banner">
+        </div>
+
+        <div class="categories">
+            <div class="cat-item"><div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-2.86-1.21-6.08-1.21-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48C3.3 11.25 1.28 14.44 1 18h22c-.28-3.56-2.3-6.75-5.4-8.52zM7 15.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/></svg></div><span>APPS</span></div>
+            <div class="cat-item"><div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg></div><span>MOVIES</span></div>
+            <div class="cat-item"><div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg></div><span>TV SHOWS</span></div>
+            <div class="cat-item"><div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div><span>GAMES</span></div>
+            <div class="cat-item"><div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg></div><span>MUSIC</span></div>
+        </div>
+
+        <div class="section">
+            <div class="section-header"><h2>Latest APKs</h2><a href="#">View All ></a></div>
+            <div class="horizontal-scroll" id="apk-list">
+                <p style="color:var(--primary); font-weight:bold; padding:10px;">Syncing with Firebase...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header"><h2>Latest Movies</h2><a href="#">View All ></a></div>
+            <div class="horizontal-scroll" id="movie-list">
+                <p style="color:var(--primary); font-weight:bold; padding:10px;">Syncing with Firebase...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="animateNav(this)">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span class="nav-label">Home</span>
+        </div>
+        <div class="nav-item" onclick="animateNav(this)">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span class="nav-label">Categories</span>
+        </div>
+        <div class="nav-item nav-center">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        </div>
+        <div class="nav-item" onclick="animateNav(this)">
+            <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg><span class="nav-label">Bookmarks</span>
+        </div>
+        <div class="nav-item" onclick="animateNav(this)">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span class="nav-label">Profile</span>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. AESTHETIC CLICK ANIMATIONS (NO PAGE SWITCHING) ---
+        function animateNav(element) {
+            // Remove active from all nav items
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            // Add active to clicked item
+            element.classList.add('active');
+        }
+
+        function animateTab(element) {
+            // Remove active from all tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            // Add active to clicked tab
+            element.classList.add('active');
+        }
+
+        // --- 2. PURE FIREBASE INTEGRATION (BULLETPROOF) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD21R9UM_jzngHC0r4vIS41KEtO6rLL-uA",
+            authDomain: "email-id-to-info.firebaseapp.com",
+            databaseURL: "https://email-id-to-info-default-rtdb.firebaseio.com",
+            projectId: "email-id-to-info",
+            storageBucket: "email-id-to-info.appspot.com",
+            messagingSenderId: "971150138986",
+            appId: "1:971150138986:web:a472c5625f776f552ab413"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // Fetch Realtime Data
+        db.ref('app_content').on('value', snap => {
+            const data = snap.val();
+            let allContent = [];
+            
+            if(data) {
+                Object.keys(data).forEach(key => { 
+                    allContent.push({ id: key, ...data[key] }); 
+                });
+                allContent.reverse(); // Show newest uploads first
+            }
+            
+            renderData(allContent);
+        });
+
+        // Render Data into the DOM
+        function renderData(dataArray) {
+            const apkList = document.getElementById('apk-list');
+            const movieList = document.getElementById('movie-list');
+            
+            apkList.innerHTML = ""; 
+            movieList.innerHTML = "";
+
+            // Robust Filter Logic (Case Insensitive)
+            let apks = dataArray.filter(i => { 
+                let t = (i.type || 'APK').toUpperCase(); 
+                return t.includes('APK') || t.includes('APP') || t.includes('GAME') || (!t.includes('MOVIE') && !t.includes('VIDEO') && !t.includes('MUSIC')); 
+            });
+            
+            let movies = dataArray.filter(i => { 
+                let t = (i.type || '').toUpperCase(); 
+                return t.includes('MOVIE') || t.includes('VIDEO') || t.includes('MUSIC') || t.includes('SHOW'); 
+            });
+
+            // 1. Inject APKs
+            if(apks.length === 0) {
+                apkList.innerHTML = "<p style='color:var(--text-gray); font-size:0.8rem; padding:10px;'>No APKs found.</p>";
+            } else {
+                apks.forEach(apk => {
+                    apkList.innerHTML += `
+                        <div class="apk-card" onclick="window.open('${apk.link}', '_blank')">
+                            <img src="${apk.img}" onerror="this.src='https://via.placeholder.com/100?text=App'">
+                            <div class="apk-title">${apk.title}</div>
+                            <div class="apk-sub">${apk.quality || ''}</div>
+                            <div class="apk-sub">${apk.size || ''}</div>
+                            <div class="dl-icon"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></div>
+                        </div>`;
+                });
+            }
+
+            // 2. Inject Movies
+            if(movies.length === 0) {
+                movieList.innerHTML = "<p style='color:var(--text-gray); font-size:0.8rem; padding:10px;'>No Movies found.</p>";
+            } else {
+                movies.forEach(movie => {
+                    let quality = movie.quality ? movie.quality.toLowerCase() : "";
+                    let hdBadge = (quality.includes('1080p') || quality.includes('hd') || quality.includes('4k')) ? `<div class="hd-badge">HD</div>` : '';
+                    
+                    movieList.innerHTML += `
+                        <div class="movie-card" onclick="window.open('${movie.link}', '_blank')">
+                            ${hdBadge}
+                            <img src="${movie.img}" onerror="this.src='https://via.placeholder.com/140x200?text=Media'">
+                            <div class="movie-title">${movie.title}</div>
+                            <div class="movie-sub">${movie.quality || ''}</div>
+                            <div class="movie-sub">• ${movie.size || ''}</div>
+                        </div>`;
+                });
+            }
+        }
+    </script>
+</body>
+  </html>
+  
